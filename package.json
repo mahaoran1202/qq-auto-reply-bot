@@ -1,0 +1,17 @@
+{
+  "name": "qq-auto-reply-bot",
+  "version": "1.0.0",
+  "description": "OneBot v11 + DeepSeek auto-reply bot for QQ (limited to allowed contacts + time window)",
+  "type": "module",
+  "main": "src/bot.js",
+  "scripts": {
+    "start": "node src/bot.js",
+    "test": "node test-dry.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

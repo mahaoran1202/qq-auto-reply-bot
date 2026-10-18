@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QQ 自动回复 · 控制台</title>
+<style>
+  :root { --bg:#14161a; --panel:#1e2128; --panel2:#262a33; --text:#e6e8ee; --muted:#9aa1af; --accent:#4f8cff; --green:#34c77b; --red:#ff5b5b; --border:#333845; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,Microsoft YaHei,sans-serif; font-size:14px; }
+  header { padding:18px 26px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  header h1 { font-size:18px; margin:0; }
+  .statusbar { display:flex; gap:10px; align-items:center; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--muted); display:inline-block; }
+  .dot.on { background:var(--green); box-shadow:0 0 8px var(--green); }
+  .dot.off { background:var(--red); }
+  main { max-width:1060px; margin:24px auto; padding:0 20px; }
+  .tabs { display:flex; gap:8px; margin-bottom:18px; }
+  .tab { padding:10px 18px; background:var(--panel); border:1px solid var(--border); border-radius:10px; cursor:pointer; color:var(--muted); }
+  .tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:18px; }
+  .card h2 { margin:0 0 14px; font-size:15px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:760px){ .grid{grid-template-columns:1fr;} }
+  label { display:block; margin-bottom:5px; color:var(--muted); font-size:13px; }
+  input,textarea,select { width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:14px; }
+  textarea { font-family:inherit; }
+  .row { margin-bottom:14px; }
+  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:14px; cursor:pointer; }
+  .btn.gray { background:var(--panel2); color:var(--text); border:1px solid var(--border); }
+  .btn.green { background:var(--green); }
+  .btn.red { background:var(--red); }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .btnrow { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .hint { color:var(--muted); font-size:12px; line-height:1.5; margin-top:8px; }
+  .log { background:#0b0d10; border:1px solid var(--border); border-radius:8px; padding:12px; height:220px; overflow:auto; font-family:Consolas,monospace; font-size:12px; white-space:pre-wrap; }
+  .msg { margin:6px 0; padding:4px 6px; border-radius:6px; background:var(--panel2); }
+  .msg.ok { border-left:3px solid var(--green); }
+  .msg.err { border-left:3px solid var(--red); }
+  a { color:var(--accent); }
+  .switch { display:inline-flex; align-items:center; gap:8px; }
+  .pill { padding:3px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); }
+  .pill.on { background:rgba(52,199,123,.15); color:var(--green); border-color:var(--green); }
+  .pill.off { background:rgba(255,91,91,.12); color:var(--red); border-color:var(--red); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { background:var(--panel2); border:1px solid var(--border); border-radius:16px; padding:5px 12px; display:inline-flex; align-items:center; gap:8px; font-size:13px; }
+  .chip button { background:none; border:none; color:var(--red); cursor:pointer; font-size:15px; padding:0; line-height:1; }
+  .chip .nn { color:var(--muted); }
+  .chip .del:hover { color:#fff; }
+  .empty { color:var(--muted); font-size:13px; font-style:italic; }
+
+  /* 性格预设卡片 */
+  .preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:12px; }
+  .preset { background:var(--panel2); border:2px solid var(--border); border-radius:12px; padding:14px; cursor:pointer; transition:.15s; }
+  .preset:hover { border-color:#4a5568; transform:translateY(-2px); }
+  .preset.sel { border-color:var(--accent); background:rgba(79,140,255,.12); }
+  .preset .pe { font-size:22px; }
+  .preset .pn { font-weight:600; margin:6px 0 4px; }
+  .preset .pi { color:var(--muted); font-size:12px; line-height:1.45; }
+  /* 滑块 */
+  .slider-row { display:grid; grid-template-columns:130px 1fr 92px; gap:12px; align-items:center; margin-bottom:12px; }
+  .slider-row label { margin:0; }
+  .slider-row input[type=range] { width:100%; padding:0; background:none; border:none; accent-color:var(--accent); }
+  .slider-val { font-size:12px; color:var(--muted); text-align:right; }
+  /* 表情包网格 */
+  .sticker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:10px; }
+  .sticker-cell { position:relative; background:var(--panel2); border:1px solid var(--border); border-radius:10px; overflow:hidden; aspect-ratio:1; }
+  .sticker-cell img { width:100%; height:100%; object-fit:cover; display:block; }
+  .sticker-cell .tagline { position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.68); color:#fff; font-size:11px; padding:3px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sticker-cell .kill { position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px; line-height:1; display:none; }
+  .sticker-cell:hover .kill { display:block; }
+  .tagbar { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .tagn { background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:4px 11px; font-size:12px; cursor:pointer; }
+  .tagn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .kbd { background:var(--panel2); border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-family:Consolas,monospace; font-size:12px; }
+  .flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+  .flow b { color:var(--text); }
+  .note { background:rgba(79,140,255,.1); border-left:3px solid var(--accent); padding:10px 12px; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.6; margin-top:10px; }
+  .warnbox { background:rgba(255,91,91,.1); border-left:3px solid var(--red); padding:10px 12px; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.6; margin-top:10px; }
+  .okbox { background:rgba(52,199,123,.1); border-left:3px solid var(--green); padding:10px 12px; border-radius:0 8px 8px 0; font-size:12.5px; line-height:1.6; margin-top:10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>QQ 自动回复 · 控制台</h1>
+  <div class="statusbar">
+    <span class="dot" id="botDot"></span><span id="botState" class="hint">机器人未启动</span>
+    <span class="pill off" id="recPill">录制:关</span>
+  </div>
+</header>
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="tab1">① 登录与配置</div>
+    <div class="tab" data-tab="tabPersona">② AI 性格</div>
+    <div class="tab" data-tab="tabSticker">③ 表情包</div>
+    <div class="tab" data-tab="tabGroup">④ 群聊</div>
+    <div class="tab" data-tab="tabLLM">⑤ API 通道</div>
+    <div class="tab" data-tab="tabNotebook">⑥ 小本本</div>
+    <div class="tab" data-tab="tab2">⑦ 聊天记录</div>
+  </div>
+
+  <!-- TAB 1 -->
+  <section id="tab1" class="pane">
+    <div class="card">
+      <h2>实时运行状态</h2>
+      <div class="btnrow">
+        <span class="pill off" id="st_conn">OneBot:--</span>
+        <span class="pill off" id="st_replies">今日已回:0</span>
+        <span class="hint" id="st_last"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>NapCat 连接诊断与修复</h2>
+      <div class="btnrow">
+        <span class="pill off" id="nc_port">端口:--</span>
+        <span class="pill off" id="nc_online">QQ:--</span>
+        <span class="pill off" id="nc_task">免UAC:--</span>
+        <button class="btn gray" id="btnNcCheck">检查连接</button>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn red" id="btnNcRestart">🔄 重启 QQ 和 NapCat</button>
+        <span class="hint" id="ncHint"></span>
+      </div>
+      <div class="note">
+        <b>什么时候要用这个按钮？</b><br />
+        · 日志一直刷 <span class="kbd">ECONNREFUSED 127.0.0.1:3001</span><br />
+        · 电脑睡眠/休眠唤醒之后（NapCat 会变成空壳进程，无法自愈）<br />
+        · QQ 自己重启过，NapCat 没跟着起来<br />
+        <br />
+        <b>免 UAC 授权</b>：右键运行一次 <span class="kbd">授权自动重启.bat</span>（管理员），
+        之后重启就不需要再点 UAC 确认了，掉线也能自动恢复。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>掉线诊断记录 <span class="hint">— 每次掉线自动抓一份现场快照</span></h2>
+      <div class="btnrow" style="margin-bottom:10px">
+        <button class="btn gray" id="btnDiagRefresh">刷新</button>
+        <button class="btn gray" id="btnDiagSnap">手动抓一份（测试用）</button>
+        <span class="hint" id="diagHint"></span>
+      </div>
+      <div id="diagList"></div>
+      <div class="empty" id="diagEmpty">还没有掉线记录（这是好事）</div>
+      <div class="note">
+        记录内容：系统启动时间、<b>有没有真的睡眠过</b>、会话变化、网络状态、
+        QQ/NapCat 进程、端口、内存占用、系统错误。<br />
+        下次再掉线，把这里的内容发我，就能定位原因。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>启动 QQ 接入（NapCat）</h2>
+      <div class="row">
+        <label>NapCat 启动命令（一般留空；留空则自动用包内的 launcher）</label>
+        <input id="napcatCmd" placeholder="留空即可，会自动用 napcat\launcher-autologin.bat" />
+      </div>
+      <div class="row">
+        <label>运行状态</label>
+        <div class="btnrow" style="margin:0">
+          <span id="ncState" class="hint">还没检测</span>
+          <button class="btn gray" id="btnNcState">刷新状态</button>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="btn green" id="btnNapcat">▶ 启动 NapCat（会弹管理员授权，然后扫码登录 QQ）</button>
+        <button class="btn gray" id="btnNapcatWebui">打开 NapCat WebUI</button>
+      </div>
+      <div class="hint">
+        点「启动」后会弹出 <b>用户账户控制</b> 窗口 → 点<b>是</b>；NapCat 要往 QQ 进程里注入模块，必须管理员权限。
+        启动完成后 QQ 会自己打开，<b>第一次要扫码登录</b>，之后由脚本自动快速登录。
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <label>NapCat WebUI 地址</label>
+        <div class="btnrow" style="margin:0">
+          <input id="ncWebuiUrl" readonly placeholder="NapCat 启动后自动显示" />
+          <button class="btn gray" id="btnCopyUrl">复制</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>NapCat WebUI 登录 Token（就是这一串，直接复制粘贴）</label>
+        <div class="btnrow" style="margin:0">
+          <input id="ncWebuiToken" readonly placeholder="NapCat 启动后自动显示" />
+          <button class="btn gray" id="btnCopyToken">复制</button>
+        </div>
+      </div>
+      <div class="hint">
+        打开 WebUI 后页面会让你填 Token —— 点上面的「复制」粘进去就行，不用自己去找文件。<br />
+        大多数情况下<b>根本不用</b>打开这个 WebUI：一键启动 / setup 已经把「正向 WebSocket :3001、令牌留空」配好了，
+        这里只是给你排查用的。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>接入与模型配置</h2>
+      <div class="grid">
+        <div>
+          <label>OneBot 端口</label>
+          <input id="ob_port" type="number" />
+        </div>
+        <div>
+          <label>访问令牌 accessToken（和 NapCat 里一致）</label>
+          <input id="ob_token" />
+        </div>
+        <div>
+          <label>DeepSeek API Key</label>
+          <input id="ds_key" placeholder="sk-..." />
+        </div>
+        <div>
+          <label>DeepSeek 模型</label>
+          <input id="ds_model" />
+        </div>
+        <div>
+          <label>温度 temperature (0-1.5, 越高越皮)</label>
+          <input id="ds_temp" type="number" step="0.1" />
+        </div>
+        <div>
+          <label>上下文轮数 contextTurns</label>
+          <input id="ds_ctx" type="number" />
+        </div>
+      </div>
+      <div class="hint">DeepSeek Key 在 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 创建。</div>
+    </div>
+
+    <div class="card">
+      <h2>机器人行为</h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="wildcardToggle" />
+          <label for="wildcardToggle" style="margin:0">回复所有人（任意私聊都自动回）</label>
+        </div>
+      </div>
+      <div class="row" id="contactManager">
+        <label>允许回复的人（点 × 删除；也可输入 QQ 号添加）</label>
+        <div id="contactList" class="chips"></div>
+        <div class="btnrow" style="margin-top:8px">
+          <input id="contactInput" placeholder="输入对方 QQ 号，如 12345678" style="flex:1;margin:0" />
+          <button class="btn gray" id="btnAddContact">添加</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>最近联系过的人（点 + 一键加入）</label>
+        <div id="recentList" class="chips"></div>
+      </div>
+      <div class="row">
+        <label>管理员QQ（逗号分隔；这些号在QQ里发 /指令 可控制机器人，如 /暂停 /状态 /性格 描述）</label>
+        <input id="admin_ids" placeholder="如 12345678, 87654321" />
+      </div>
+      <div class="row">
+        <label>指令前缀</label>
+        <input id="cmd_prefix" placeholder="/" />
+      </div>
+      <div class="grid">
+        <div>
+          <label>启用后自动回复</label>
+          <select id="bot_enabled"><option value="1">开</option><option value="0">关</option></select>
+        </div>
+        <div>
+          <label>时段开关</label>
+          <select id="tw_enabled"><option value="1">开</option><option value="0">关</option></select>
+        </div>
+        <div>
+          <label>自动回复开始时间 (HH:mm)</label>
+          <input id="tw_start" placeholder="09:00" />
+        </div>
+        <div>
+          <label>自动回复结束时间 (HH:mm)</label>
+          <input id="tw_end" placeholder="23:00" />
+        </div>
+        <div>
+          <label>一次回复最少条数</label>
+          <input id="seg_min" type="number" min="1" max="10" />
+        </div>
+        <div>
+          <label>一次回复最多条数</label>
+          <input id="seg_max" type="number" min="1" max="10" />
+        </div>
+        <div>
+          <label>联网搜索</label>
+          <select id="ws_enabled"><option value="1">开</option><option value="0">关</option></select>
+        </div>
+        <div>
+          <label>同一人冷却 (毫秒)</label>
+          <input id="cd_ms" type="number" step="1000" placeholder="30000" />
+        </div>
+        <div>
+          <label>每小时最多自动回(条)</label>
+          <input id="hourly" type="number" placeholder="12" />
+        </div>
+      </div>
+      <div class="hint">「回复所有人」开启 = 谁私聊你都自动回；关闭 = 只回你在下面添加的人。敏感话题（转账/借钱/约时间/承诺/争执）仍会回「稍后回你」，不替你做决定。</div>
+    </div>
+
+    <div class="card">
+      <h2>反浪费（防刷屏烧 token）</h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="aw_enabled" />
+          <label for="aw_enabled" style="margin:0">开启反浪费：短时间刷屏 → 骂两句 + 表明是 AI + 停止回复</label>
+        </div>
+      </div>
+      <div class="grid">
+        <div>
+          <label>窗口时长(毫秒, 默认60000=60秒)</label>
+          <input id="aw_window" type="number" step="1000" placeholder="60000" />
+        </div>
+        <div>
+          <label>窗口内超过几条=刷屏</label>
+          <input id="aw_max" type="number" placeholder="5" />
+        </div>
+        <div>
+          <label>静默时长(毫秒, 默认1800000=30分钟)</label>
+          <input id="aw_block" type="number" step="10000" placeholder="1800000" />
+        </div>
+        <div>
+          <label>触发后回复(每条一行)</label>
+          <textarea id="aw_reply" rows="2" placeholder="每行一条，如：&#10;傻逼，别刷了，我是AI。&#10;再刷我闭嘴。"></textarea>
+        </div>
+      </div>
+      <div class="hint">触发后回这些消息（可带脏话），并让这个人静默一段时间，不再调 DeepSeek、不花 token。</div>
+    </div>
+
+    <div class="card">
+      <h2>省钱（余额监控，与反浪费合并）</h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="lb_enabled" />
+          <label for="lb_enabled" style="margin:0">余额低于阈值时：停止自动回复 + 发提示（不再花 token）</label>
+        </div>
+      </div>
+      <div class="grid">
+        <div>
+          <label>余额阈值（元）</label>
+          <input id="lb_threshold" type="number" step="0.1" placeholder="1" />
+        </div>
+        <div>
+          <label>检查间隔（分钟）</label>
+          <input id="lb_check" type="number" placeholder="10" />
+        </div>
+        <div>
+          <label>通知到哪个 QQ（可留空）</label>
+          <input id="lb_notify" placeholder="你的另一个QQ号，如 12345678" />
+        </div>
+        <div>
+          <label>余额低时回复(每条一行)</label>
+          <textarea id="lb_reply" rows="2" placeholder="每行一条，如：&#10;余额快没了，先暂停自动回复。&#10;等充值再说。"></textarea>
+        </div>
+      </div>
+      <div class="hint">余额 ≤ 阈值时，机器人不再调用 DeepSeek 生成回复（省钱），改发上面的提示，并通知到指定 QQ（若有）。和反浪费一样都属于「停发省钱」。</div>
+    </div>
+
+    <div class="card">
+      <h2>风格中心</h2>
+      <div class="btnrow">
+        <button class="btn gray" id="btnShowPersona">查看当前风格提示词</button>
+        <button class="btn gray" id="btnClearStyle">清空已学风格（重新学）</button>
+        <button class="btn gray" id="btnRelearn">一键重新学风格（清空+重启）</button>
+        <span class="hint" id="personaHint"></span>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label>用语言改性格（如：高冷一点，惜字如金；或：活泼点，多点玩梗）</label>
+        <textarea id="persona_input" rows="2" placeholder="例如：高冷一点，惜字如金"></textarea>
+      </div>
+      <div class="btnrow">
+        <button class="btn gray" id="btnApplyPersona">应用性格（写入并重启生效）</button>
+      </div>
+      <div class="log" id="personaOut" style="height:auto;max-height:160px"></div>
+    </div>
+
+    <div class="card">
+      <h2>控制</h2>
+      <div class="btnrow">
+        <button class="btn" id="btnSave">保存配置</button>
+        <button class="btn green" id="btnBotStart">▶ 启动机器人</button>
+        <button class="btn red" id="btnBotStop">■ 停止机器人</button>
+        <button class="btn gray" id="btnQQUpgrade">升级 QQ（UAC确认）</button>
+        <span class="hint" id="saveHint"></span>
+      </div>
+      <div class="hint" id="qqHint"></div>
+    </div>
+
+    <div class="card">
+      <h2>运行日志</h2>
+      <div class="log" id="botLog"></div>
+    </div>
+  </section>
+
+  <!-- TAB 2: AI 性格 -->
+  <section id="tabPersona" class="pane" style="display:none">
+    <div class="card">
+      <h2>① 选一个性格底板</h2>
+      <div class="preset-grid" id="presetGrid"></div>
+      <div class="note">点一张卡片就切换性格。<b>自定义</b> = 只用下面的文字描述，不套预设。</div>
+    </div>
+
+    <div class="card">
+      <h2>② 细调（拖动即生效）</h2>
+      <div id="paramBox"></div>
+    </div>
+
+    <div class="card">
+      <h2>③ 补充描述 / 口头禅 / 禁用词</h2>
+      <div class="row" id="customStyleRow">
+        <label id="customStyleLabel">性格补充描述（叠加在预设之上，优先级更高）</label>
+        <textarea id="p_custom" rows="5" placeholder="例如：说话爱用「绝了」；别人问问题时先反问一句；不喜欢说「好的」只说「行」。"></textarea>
+        <div class="hint" id="customStyleHint"></div>
+      </div>
+      <div class="grid">
+        <div>
+          <label>口头禅（一行一个，AI 会自然穿插）</label>
+          <textarea id="p_catch" rows="4" placeholder="咋了&#10;啥事直说&#10;行"></textarea>
+        </div>
+        <div>
+          <label>绝对不说的词（一行一个）</label>
+          <textarea id="p_forbid" rows="4" placeholder="例如：亲、您、请问"></textarea>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div>
+          <label>我在群里的昵称（让别人叫得准）</label>
+          <input id="p_botnick" placeholder="例如：大肥鱼" />
+        </div>
+        <div>
+          <label>AI 怎么称呼你（号主）</label>
+          <input id="p_ownercall" placeholder="例如：老板 / 哥" />
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn green" id="btnPersonaSave">保存性格 ✓</button>
+        <button class="btn gray" id="btnPersonaPreview">预览最终提示词</button>
+        <span class="hint" id="personaHint2"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>④ 对我自己（号主）的态度 <span class="hint">— 跟对别人完全不一样</span></h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="o_enabled" />
+          <label for="o_enabled" style="margin:0">启用号主专属态度（对下面这些 QQ 号换一套语气）</label>
+        </div>
+      </div>
+      <div class="row">
+        <label>哪些 QQ 号算「我自己」（逗号或空格分隔）</label>
+        <input id="o_ids" placeholder="例如：12345678, 87654321" />
+        <div class="hint">这些号跟你说话时，会切换成下面的态度，前面选的性格（幽默/互怼那些）一律让位。</div>
+      </div>
+      <div class="row">
+        <label>对自己用什么态度（一行一条）</label>
+        <textarea id="o_style" rows="7" placeholder="· 这是我本人，说话不用客气&#10;· 我让你做什么就直接做，别找理由&#10;· 可以更放得开"></textarea>
+      </div>
+      <div class="btnrow">
+        <button class="btn green" id="btnOwnerSave">保存号主态度 ✓</button>
+        <span class="hint" id="ownerHint"></span>
+      </div>
+      <div class="note">
+        判断依据是 <b>QQ 号</b>，不是昵称——别人把昵称改成跟你一样也骗不过去。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⑤ 回复长度</h2>
+      <div class="grid">
+        <div>
+          <label>每次连发几条（最少）</label>
+          <input id="seg_min2" type="number" min="1" max="10" />
+        </div>
+        <div>
+          <label>每次连发几条（最多）</label>
+          <input id="seg_max2" type="number" min="1" max="10" />
+        </div>
+        <div>
+          <label>单条最长字数（AI 生成上限，越大写得越长）</label>
+          <input id="max_tokens2" type="number" step="100" min="200" max="8000" />
+        </div>
+        <div>
+          <label>连发间隔（毫秒）</label>
+          <input id="seg_delay2" type="number" step="100" />
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn green" id="btnLenSave">保存长度设置 ✓</button>
+        <span class="hint" id="lenHint"></span>
+      </div>
+      <div class="note">
+        想让它说得更长更完整：把「单条最长字数」调大（比如 2000~3000），条数保持在 3~4 条。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>提示词预览（这就是 AI 实际看到的东西）</h2>
+      <div class="btnrow" style="margin-bottom:10px">
+        <button class="btn gray" id="btnScenePrivate">私聊版</button>
+        <button class="btn gray" id="btnSceneGroup">群聊版</button>
+        <span class="hint" id="previewLen"></span>
+      </div>
+      <div class="log" id="personaPreview" style="height:320px"></div>
+    </div>
+
+    <div class="card">
+      <h2>已学到的你的说话风格</h2>
+      <div class="hint">这是从你的历史消息里学出来的，优先级最高。点下面按钮可清空并重学。</div>
+      <div class="log" id="learnedStyle" style="height:auto;max-height:200px;margin-top:10px"></div>
+      <div class="btnrow" style="margin-top:10px">
+        <button class="btn gray" id="btnRelearn2">一键重新学风格（清空+重启）</button>
+        <button class="btn gray" id="btnClearStyle2">清空已学风格</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: 表情包 -->
+  <section id="tabSticker" class="pane" style="display:none">
+    <div class="card">
+      <h2>表情包总开关</h2>
+      <div class="grid">
+        <div>
+          <label>允许发表情包</label>
+          <select id="st_enabled"><option value="1">开</option><option value="0">关</option></select>
+        </div>
+        <div>
+          <label>允许发 QQ 内置小黄脸</label>
+          <select id="st_face"><option value="1">开</option><option value="0">关</option></select>
+        </div>
+        <div>
+          <label>单条回复最多几个表情</label>
+          <input id="st_max" type="number" min="0" max="3" />
+        </div>
+        <div>
+          <label>表情库文件夹</label>
+          <input id="st_dir" placeholder="stickers" />
+        </div>
+      </div>
+      <div class="note">
+        表情包的使用频率是在「<b>AI 性格</b>」页的 <b>表情包频率</b> 那一项里调的。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>怎么让 AI 会发表情包（看这个）</h2>
+      <div class="flow" style="margin-bottom:10px">
+        <b>①</b> 把表情包图片丢进文件夹 →
+        <b>②</b> 按情绪命名（或放进情绪文件夹） →
+        <b>③</b> AI 回复时自己写 <span class="kbd">[STICKER]笑死[/STICKER]</span> →
+        <b>④</b> 程序挑一张最贴合的图发出去
+      </div>
+      <div class="hint">
+        支持的情绪关键词：<span id="tagHint"></span>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn green" id="btnOpenDir">📂 打开表情包文件夹</button>
+        <button class="btn gray" id="btnRescan">重新扫描</button>
+        <span class="hint" id="stHint"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>自动抓群里的表情包</h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="cs_enabled" />
+          <label for="cs_enabled" style="margin:0">开启：别人在群里发的图，自动收进表情库，以后自己也能发</label>
+        </div>
+      </div>
+      <div class="grid">
+        <div>
+          <label>最大收多大的图（KB）</label>
+          <input id="cs_maxkb" type="number" step="100" />
+        </div>
+        <div>
+          <label>攒够几张就打标签</label>
+          <input id="cs_tagevery" type="number" min="1" max="20" />
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn green" id="btnCsSave">保存 ✓</button>
+        <button class="btn gray" id="btnCsOpen">📂 打开抓取目录</button>
+        <button class="btn red" id="btnCsClear">清空抓来的图</button>
+        <span class="hint" id="csHint"></span>
+      </div>
+      <div class="note">
+        抓来的图放在 <span class="kbd">stickers/_自动抓取/</span>，<b>不会动你原有的分类</b>。<br />
+        每张图用内容指纹去重，同一张只存一次。攒够设定张数后 AI 会自动识别情绪并打标签，之后就能按情绪发出去。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>表情库预览 <span class="hint" id="stCount"></span></h2>
+      <div class="tagbar" id="tagBar"></div>
+      <div class="sticker-grid" id="stickerGrid"></div>
+      <div class="empty" id="stickerEmpty" style="display:none">
+        表情库还是空的。点上面的「打开表情包文件夹」，把 QQ 表情包图片（.jpg/.png/.gif/.webp）直接拖进去，然后点「重新扫描」。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>试一下（不真发，看看会挑哪张）</h2>
+      <div class="btnrow">
+        <input id="st_testkw" placeholder="输入情绪词，如：笑死 / 无语 / 点赞" style="flex:1;margin:0" />
+        <button class="btn" id="btnTestSticker">挑一张看看</button>
+      </div>
+      <div class="log" id="stTestOut" style="height:auto;max-height:200px;margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>小黄脸编号对照（写 <span class="kbd">[FACE]编号[/FACE]</span> 就能发）</h2>
+      <div class="chips" id="faceChips" style="max-height:220px;overflow:auto"></div>
+    </div>
+  </section>
+
+  <!-- TAB 4: 群聊 -->
+  <section id="tabGroup" class="pane" style="display:none">
+    <div class="card">
+      <h2>群聊开关</h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="g_enabled" />
+          <label for="g_enabled" style="margin:0">开启群聊自动回复</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="g_replyAt" />
+          <label for="g_replyAt" style="margin:0">被 @ 时必须回复</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="g_judge" />
+          <label for="g_judge" style="margin:0">没被 @ 时，让 AI 自己判断该不该插话</label>
+        </div>
+      </div>
+      <div class="grid">
+        <div>
+          <label>AI 判断的积极程度</label>
+          <select id="g_threshold">
+            <option value="1">1 · 几乎不插话（只有极确定才开口）</option>
+            <option value="2">2 · 很安静</option>
+            <option value="3">3 · 正常（推荐）</option>
+            <option value="4">4 · 比较活跃</option>
+            <option value="5">5 · 很爱接话</option>
+          </select>
+        </div>
+        <div>
+          <label>同一群里冷却（毫秒）</label>
+          <input id="g_cooldown" type="number" step="1000" />
+        </div>
+        <div>
+          <label>每小时每群最多回几条</label>
+          <input id="g_hourly" type="number" />
+        </div>
+        <div>
+          <label>判断用的模型（留空=跟回复用同一个；填了可省钱）</label>
+          <input id="g_judgemodel" placeholder="如 deepseek-chat" />
+        </div>
+      </div>
+      <div class="note">
+        判断插话会额外调用一次很小的 AI 请求（只输出一个数字），比整条生成便宜得多。
+        想更省，可以把「判断用的模型」指向本地模型（在 <b>API 通道</b> 页配置）。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>允许回复的群</h2>
+      <div class="row">
+        <div class="switch">
+          <input type="checkbox" id="g_all" />
+          <label for="g_all" style="margin:0">允许所有群（不建议，可能被踢）</label>
+        </div>
+      </div>
+      <div class="row" id="groupListBox">
+        <label>群白名单（点 × 删除）</label>
+        <div id="groupChips" class="chips"></div>
+        <div class="btnrow" style="margin-top:8px">
+          <input id="groupInput" placeholder="输入群号" style="flex:1;margin:0" />
+          <button class="btn gray" id="btnAddGroup">添加</button>
+          <button class="btn gray" id="btnLoadGroups">从 QQ 拉取群列表</button>
+        </div>
+      </div>
+      <div class="hint" id="groupLiveHint"></div>
+    </div>
+
+    <div class="card">
+      <h2>总结：群里什么时候会回你</h2>
+      <div class="flow" style="line-height:2">
+        <b>被 @</b> → 一定回（除非关掉）<br />
+        <b>没被 @</b> → AI 快速判断「这话该我接吗」→ 觉得该接才回<br />
+        <b>群里发 /指令</b> → 管理员可远程控制<br />
+        <b>不在白名单的群</b> → 完全不理
+      </div>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn green" id="btnGroupSave">保存群聊设置 ✓</button>
+        <span class="hint" id="groupHint"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 5: API 通道 -->
+  <section id="tabLLM" class="pane" style="display:none">
+    <div class="card">
+      <h2>用哪条通道</h2>
+      <div class="grid">
+        <div>
+          <label>当前使用</label>
+          <select id="llm_active">
+            <option value="deepseek">DeepSeek 官方</option>
+            <option value="openai">其他网站 / 本地模型（OpenAI 兼容）</option>
+          </select>
+        </div>
+      </div>
+      <div class="note">
+        两条通道都保留，随时切换。<b>DeepSeek 官方</b>额外支持余额查询；
+        <b>OpenAI 兼容</b>可以接任何兼容接口，包括本地跑的模型（免费）。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>通道 A · DeepSeek 官方</h2>
+      <div class="grid">
+        <div>
+          <label>API Key</label>
+          <input id="ds_key2" placeholder="sk-..." />
+        </div>
+        <div>
+          <label>接口地址</label>
+          <input id="ds_base2" placeholder="https://api.deepseek.com" />
+        </div>
+        <div>
+          <label>模型</label>
+          <input id="ds_model2" placeholder="deepseek-chat" />
+        </div>
+        <div>
+          <label>温度（越高越活泼）</label>
+          <input id="ds_temp2" type="number" step="0.1" min="0" max="1.5" />
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn" id="btnTestDS">测试 DeepSeek 连接</button>
+        <span class="hint" id="dsTestHint"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>通道 B · 其他网站 / 本地模型（OpenAI 兼容）</h2>
+      <div class="grid">
+        <div>
+          <label>通道备注名</label>
+          <input id="oa_name" placeholder="例如：我的中转站 / 本地 Ollama" />
+        </div>
+        <div>
+          <label>接口地址 baseUrl（填到 /v1 为止）</label>
+          <input id="oa_base" placeholder="http://127.0.0.1:11434/v1" />
+        </div>
+        <div>
+          <label>API Key（本地模型留空即可）</label>
+          <input id="oa_key" placeholder="留空 = 本地/免鉴权" />
+        </div>
+        <div>
+          <label>模型名</label>
+          <input id="oa_model" placeholder="qwen3-8b:latest" />
+        </div>
+        <div>
+          <label>温度</label>
+          <input id="oa_temp" type="number" step="0.1" min="0" max="1.5" />
+        </div>
+        <div>
+          <label>超时（毫秒，本地模型建议调大）</label>
+          <input id="oa_timeout" type="number" step="1000" />
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn" id="btnTestOA">测试这条通道</button>
+        <button class="btn gray" id="btnListModels">拉取可用模型列表</button>
+        <span class="hint" id="oaTestHint"></span>
+      </div>
+      <div class="hint" id="modelList" style="margin-top:10px"></div>
+
+      <div class="note" style="margin-top:14px">
+        <b>常用地址示例（复制即用）：</b><br />
+        · 本地 Ollama：<span class="kbd">http://127.0.0.1:11434/v1</span>（模型写 <span class="kbd">qwen3-8b:latest</span>，Key 留空）<br />
+        · LM Studio：<span class="kbd">http://127.0.0.1:1234/v1</span>（Key 留空）<br />
+        · 硅基流动：<span class="kbd">https://api.siliconflow.cn/v1</span><br />
+        · 智谱 GLM：<span class="kbd">https://open.bigmodel.cn/api/paas/v4</span><br />
+        · 月之暗面 Kimi：<span class="kbd">https://api.moonshot.cn/v1</span><br />
+        · 中转站：按站长给的地址填，一般以 <span class="kbd">/v1</span> 结尾<br />
+        <br />
+        地址填错了也没关系——带 <span class="kbd">/chat/completions</span> 尾巴会自动去掉，没写版本号会自动补 <span class="kbd">/v1</span>。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>按用途分流（可选，用来省钱）</h2>
+      <div class="hint" style="margin-bottom:12px">
+        可以让不同的活儿走不同的通道。例如：正常回话用 DeepSeek（质量好），群里「要不要插话」的判断走本地模型（免费）。
+      </div>
+      <div class="grid">
+        <div>
+          <label>正常回话</label>
+          <select id="purpose_reply"><option value="">跟随上面「当前使用」</option><option value="deepseek">DeepSeek 官方</option><option value="openai">OpenAI 兼容通道</option></select>
+        </div>
+        <div>
+          <label>群里判断要不要插话</label>
+          <select id="purpose_judge"><option value="">跟随上面「当前使用」</option><option value="deepseek">DeepSeek 官方</option><option value="openai">OpenAI 兼容通道</option></select>
+        </div>
+        <div>
+          <label>学习说话风格</label>
+          <select id="purpose_style"><option value="">跟随上面「当前使用」</option><option value="deepseek">DeepSeek 官方</option><option value="openai">OpenAI 兼容通道</option></select>
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn green" id="btnLLMSave">保存通道设置 ✓</button>
+        <span class="hint" id="llmHint"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 6: 小本本 -->
+  <section id="tabNotebook" class="pane" style="display:none">
+    <div class="card">
+      <h2>小本本是什么</h2>
+      <div class="hint" style="line-height:1.8">
+        机器人会拿个小本本记下跟每个人有关的事：<br />
+        · <b>记仇</b> —— 谁骂了它、开它玩笑、让它不爽<br />
+        · <b>记好</b> —— 谁夸了它、帮了它、让它开心<br />
+        · <b>印象</b> —— 谁是什么性格（嘴毒、爱抬杠、温柔…）<br />
+        · <b>事件</b> —— 值得记住的具体事<br />
+        <br />
+        <b>只认人不认环境</b>：同一个人私聊和群里共用一本笔记。换环境提起时会说「你之前在私信里说我…」。<br />
+        <b>有事才记</b>：不是每条都记，只有情绪波动或标志性事件才写。<br />
+        <b>绝不捏造</b>：每条记录都必须带对方原话，程序会校验原话真的说过才写进去。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>记了谁的</h2>
+      <div class="btnrow" style="margin-bottom:12px">
+        <button class="btn gray" id="btnNbRefresh">刷新</button>
+        <span class="hint" id="nbHint"></span>
+      </div>
+      <div class="chips" id="nbPeople"></div>
+      <div class="empty" id="nbEmpty" style="display:none">
+        还没有记任何人。等机器人遇到值得记的事就会自动写。
+      </div>
+    </div>
+
+    <div class="card" id="nbDetailCard" style="display:none">
+      <h2>某人的笔记 <span class="hint" id="nbWho"></span></h2>
+
+      <!-- 说话策略 -->
+      <div id="nbStrategyBox" style="margin-bottom:16px;display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <b style="color:var(--accent)">🤖 AI 生成的说话策略</b>
+          <span class="hint" id="nbStrategyMeta"></span>
+          <button class="btn gray" id="btnNbRegen" style="margin-left:auto;padding:5px 12px;font-size:12px">重新生成</button>
+        </div>
+        <div id="nbStrategyBody" style="background:var(--panel2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;line-height:1.7"></div>
+      </div>
+      <div id="nbStrategyEmpty" class="hint" style="margin-bottom:14px;display:none">
+        还没有说话策略（至少要有 2 条记录才会自动生成）。
+      </div>
+
+      <div class="btnrow" style="margin-bottom:12px">
+        <span class="pill" id="nbStatGrudge">记仇:0</span>
+        <span class="pill" id="nbStatFavor">记好:0</span>
+        <span class="pill" id="nbStatTrait">印象:0</span>
+        <span class="pill" id="nbStatEvent">事件:0</span>
+        <button class="btn red" id="btnNbClear" style="margin-left:auto">清空这个人的笔记</button>
+      </div>
+      <div id="nbNotes"></div>
+    </div>
+
+    <div class="card">
+      <h2>手动补一条</h2>
+      <div class="grid">
+        <div>
+          <label>QQ 号</label>
+          <input id="nbAddUser" placeholder="12345678" />
+        </div>
+        <div>
+          <label>类型</label>
+          <select id="nbAddKind">
+            <option value="grudge">记仇</option>
+            <option value="favor">记好</option>
+            <option value="trait">印象</option>
+            <option value="event">事件</option>
+          </select>
+        </div>
+        <div>
+          <label>一句话概括</label>
+          <input id="nbAddGist" placeholder="例如：骂我是笨鱼" />
+        </div>
+        <div>
+          <label>对方原话（可选）</label>
+          <input id="nbAddQuote" placeholder="逐字照抄" />
+        </div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn green" id="btnNbAdd">添加</button>
+        <span class="hint" id="nbAddHint"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 7 -->
+  <section id="tab2" class="pane" style="display:none">
+    <div class="card">
+      <h2>截取 / 导出聊天记录</h2>
+      <div class="row">
+        <label>目标 QQ 号（要学习的那个人）</label>
+        <input id="rec_user" placeholder="例如 22224444" />
+      </div>
+      <div class="btnrow">
+        <button class="btn green" id="btnRecToggle">开始录制（采集机器人期间的对话）</button>
+        <button class="btn" id="btnExport">导出聊天记录到文件</button>
+        <button class="btn gray" id="btnStyle">用「我的消息」生成风格描述</button>
+        <button class="btn gray" id="btnApplyStyle">把风格写入配置</button>
+      </div>
+      <div class="hint" id="recHint"></div>
+    </div>
+
+    <div class="card">
+      <h2>粘贴你自己的历史消息（可选，最像你本人）</h2>
+      <div class="row">
+        <textarea id="pasteSamples" rows="6" placeholder="每行一条你以前自己发的话（想学最像你的风格，用这个最准）&#10;..."></textarea>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="btnPasteStyle">用粘贴的样本生成风格描述</button>
+        <button class="btn gray" id="btnApplyStyle2">把风格写入配置</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>风格描述结果</h2>
+      <div class="log" id="styleOut" style="height:auto"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = async (path, body) => {
+  const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  return r.json();
+};
+const pick = (o, k, d) => (o && o[k] !== undefined ? o[k] : d);
+
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.pane').forEach(p => p.style.display='none');
+  document.getElementById(t.dataset.tab).style.display='block';
+}));
+
+// ---- load config ----
+async function loadConfig() {
+  const c = await api('/api/config');
+  $('ob_port').value = pick(c.onebot,'port',3001);
+  $('ob_token').value = pick(c.onebot,'accessToken','');
+  $('ds_key').value = pick(c.deepseek,'apiKey','');
+  $('ds_model').value = pick(c.deepseek,'model','deepseek-chat');
+  $('ds_temp').value = pick(c.deepseek,'temperature',0.8);
+  $('ds_ctx').value = pick(c.deepseek,'contextTurns',6);
+  const arr = (pick(c.bot,'allowedUsers',[])||[]).map(String);
+  wildcard = arr.includes('*');
+  allowedList = arr.filter(x => x !== '*');
+  $('wildcardToggle').checked = wildcard;
+  renderContacts();
+  $('bot_enabled').value = pick(c.bot,'enabled',true) ? '1' : '0';
+  $('tw_enabled').value = pick(c.bot.timeWindow,'enabled',true) ? '1' : '0';
+  $('tw_start').value = pick(c.bot.timeWindow,'start','09:00');
+  $('tw_end').value = pick(c.bot.timeWindow,'end','23:00');
+  $('seg_min').value = pick(c.bot,'replySegmentsMin',3);
+  $('seg_max').value = pick(c.bot,'replySegmentsMax',5);
+  $('ws_enabled').value = pick(c.bot.webSearch,'enabled',true) ? '1' : '0';
+  $('admin_ids').value = (pick(c.bot,'admin',[])||[]).join(', ');
+  $('cmd_prefix').value = pick(c.bot,'commandPrefix','/');
+  $('persona_input').value = pick(c.persona,'stylePrompt','');
+  $('cd_ms').value = pick(c.bot,'replyCooldownMs',30000);
+  $('hourly').value = pick(c.bot,'maxAutoRepliesPerConversationPerHour',12);
+  const aw = c.bot.antiWaste || {};
+  $('aw_enabled').checked = !!aw.enabled;
+  $('aw_window').value = pick(aw,'windowMs',60000);
+  $('aw_max').value = pick(aw,'maxMessagesInWindow',5);
+  $('aw_block').value = pick(aw,'blockMs',1800000);
+  $('aw_reply').value = (aw.reply||[]).join('\n');
+  const lb = c.bot.lowBalance || {};
+  $('lb_enabled').checked = !!lb.enabled;
+  $('lb_threshold').value = pick(lb,'threshold',1);
+  $('lb_check').value = pick(lb,'checkMinutes',10);
+  $('lb_notify').value = pick(lb,'notifyAdmin','');
+  $('lb_reply').value = (lb.reply||[]).join('\n');
+  $('napcatCmd').value = pick(c.napcat,'command','');
+  refreshRecent();
+}
+
+function collectConfig() {
+  const users = wildcard ? ['*'] : allowedList;
+  return {
+    onebot: { port: Number($('ob_port').value)||3001, accessToken: $('ob_token').value },
+    deepseek: { apiKey: $('ds_key').value, model: $('ds_model').value, temperature: Number($('ds_temp').value), contextTurns: Number($('ds_ctx').value)||6 },
+    bot: {
+      enabled: $('bot_enabled').value==='1',
+      allowedUsers: users,
+      replySegmentsMin: Number($('seg_min').value)||3,
+      replySegmentsMax: Number($('seg_max').value)||5,
+      webSearch: { enabled: $('ws_enabled').value==='1' },
+      admin: $('admin_ids').value.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean),
+      commandPrefix: $('cmd_prefix').value || '/',
+      replyCooldownMs: Number($('cd_ms').value)||30000,
+      maxAutoRepliesPerConversationPerHour: Number($('hourly').value)||12,
+      antiWaste: {
+        enabled: $('aw_enabled').checked,
+        windowMs: Number($('aw_window').value)||60000,
+        maxMessagesInWindow: Number($('aw_max').value)||5,
+        blockMs: Number($('aw_block').value)||1800000,
+        reply: $('aw_reply').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)
+      },
+      lowBalance: {
+        enabled: $('lb_enabled').checked,
+        threshold: Number($('lb_threshold').value)||1,
+        checkMinutes: Number($('lb_check').value)||10,
+        notifyAdmin: $('lb_notify').value,
+        replyCooldownMs: 600000,
+        reply: $('lb_reply').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)
+      },
+      timeWindow: { enabled: $('tw_enabled').value==='1', start: $('tw_start').value||'09:00', end: $('tw_end').value||'23:00', timezone: 'Asia/Shanghai' }
+    },
+    napcat: { command: $('napcatCmd').value }
+  };
+}
+
+// ---- 联系人管理 ----
+let allowedList = [];
+let wildcard = false;
+function renderContacts() {
+  const box = $('contactList');
+  $('contactManager').style.display = wildcard ? 'none' : 'block';
+  if (!allowedList.length) { box.innerHTML = '<span class="empty">还没有添加任何人。关闭「回复所有人」后，在这里添加要自动回的人。</span>'; return; }
+  box.innerHTML = allowedList.map(id =>
+    `<span class="chip"><span>${id}</span><button class="del" title="删除" data-id="${id}">×</button></span>`
+  ).join('');
+  box.querySelectorAll('.del').forEach(b => b.onclick = () => { allowedList = allowedList.filter(x => x !== b.dataset.id); renderContacts(); autoSave(); });
+}
+async function refreshRecent() {
+  try {
+    const st = await api('/api/record/status');
+    const users = (st.users || []).filter(u => !allowedList.includes(u));
+    const box = $('recentList');
+    if (!users.length) { box.innerHTML = '<span class="empty">暂无记录（聊天后这里会出现对方 QQ 号）。</span>'; return; }
+    box.innerHTML = users.slice(0, 15).map(u =>
+      `<span class="chip"><span class="nn">${u}</span><button class="plus" title="加入" data-id="${u}">+</button></span>`
+    ).join('');
+    box.querySelectorAll('.plus').forEach(b => b.onclick = () => { if (!allowedList.includes(b.dataset.id)) allowedList.push(b.dataset.id); $('wildcardToggle').checked = false; wildcard = false; renderContacts(); refreshRecent(); autoSave(); });
+  } catch (e) { /* ignore */ }
+}
+$('wildcardToggle').onchange = () => { wildcard = $('wildcardToggle').checked; renderContacts(); autoSave(); };
+$('btnAddContact').onclick = () => {
+  const v = $('contactInput').value.trim();
+  if (!v) return;
+  if (!allowedList.includes(v)) allowedList.push(v);
+  $('contactInput').value = '';
+  renderContacts();
+  autoSave();
+};
+
+// ---- 配置自动保存 ----
+let saveTimer = null;
+function autoSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      const r = await api('/api/config', collectConfig());
+      $('saveHint').textContent = r.ok ? (new Date().toLocaleTimeString() + ' 已自动保存 ✓') : '保存失败';
+    } catch (e) { /* ignore */ }
+  }, 650);
+}
+// 其它设置项改动也自动保存
+['ob_port','ob_token','ds_key','ds_model','ds_temp','ds_ctx','bot_enabled','tw_enabled','tw_start','tw_end','seg_min','seg_max','ws_enabled','napcatCmd','cd_ms','hourly','aw_enabled','aw_window','aw_max','aw_block','aw_reply','lb_enabled','lb_threshold','lb_check','lb_notify','lb_reply','admin_ids','cmd_prefix'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', autoSave);
+});
+
+$('btnSave').onclick = async () => { const r = await api('/api/config', collectConfig()); $('saveHint').textContent = r.ok?'已保存 ✓':'保存失败'; };
+
+// ---- NapCat 诊断与重启 ----
+async function checkNapCat() {
+  $('ncHint').textContent = '检查中…';
+  try {
+    const r = await api('/api/napcat/health');
+    const portEl = $('nc_port'), onEl = $('nc_online'), taskEl = $('nc_task');
+    portEl.className = 'pill ' + (r.listening ? 'on' : 'off');
+    portEl.textContent = '端口3001:' + (r.listening ? '通' : '不通');
+    onEl.className = 'pill ' + (r.online ? 'on' : 'off');
+    onEl.textContent = 'QQ:' + (r.online === true ? '在线' : r.online === false ? '离线' : '未知');
+    taskEl.className = 'pill ' + (r.taskReady ? 'on' : 'off');
+    taskEl.textContent = '免UAC:' + (r.taskReady ? '已授权' : '未授权');
+
+    if (!r.listening) {
+      $('ncHint').textContent = 'NapCat 没在跑 → 点右边「重启 QQ 和 NapCat」';
+    } else if (r.online === false) {
+      $('ncHint').textContent = 'QQ 掉线了 → 点右边「重启 QQ 和 NapCat」';
+    } else if (r.online === true) {
+      $('ncHint').textContent = '连接正常 ✓';
+    } else {
+      $('ncHint').textContent = r.error ? ('异常：' + r.error) : '状态未知';
+    }
+  } catch (e) {
+    $('ncHint').textContent = '检查失败：' + e.message;
+  }
+}
+$('btnNcCheck').onclick = checkNapCat;
+
+$('btnNcRestart').onclick = async () => {
+  if (!confirm('重启 QQ 和 NapCat？\n\n· 机器人会先停掉\n· QQ 会关闭再重开\n· 可能需要你扫码登录\n\n继续吗？')) return;
+  $('ncHint').textContent = '正在重启…（请留意屏幕上的 UAC 弹窗）';
+  const r = await api('/api/napcat/restart', {});
+  $('ncHint').textContent = r.ok ? (r.note || '已发起重启') : ('失败：' + r.error);
+  refreshStatus();
+  setTimeout(checkNapCat, 20000);
+};
+// ---- NapCat WebUI 地址 / Token ----
+let ncWebuiUrl = 'http://127.0.0.1:6099/webui';
+async function loadWebuiInfo() {
+  try {
+    const r = await api('/api/napcat/webui');
+    if (r.ok) {
+      ncWebuiUrl = r.url || ncWebuiUrl;
+      $('ncWebuiUrl').value = r.url || '';
+      $('ncWebuiToken').value = r.token || '（没有设置 token，直接点登录即可）';
+      $('ncWebuiToken').dataset.token = r.token || '';
+    } else {
+      $('ncWebuiUrl').value = '（NapCat 还没启动过）';
+      $('ncWebuiToken').value = '（NapCat 还没启动过）';
+      $('ncWebuiToken').dataset.token = '';
+    }
+  } catch (e) {
+    $('ncWebuiToken').value = '读取失败：' + e.message;
+  }
+}
+
+async function copyField(id, label) {
+  const el = $(id);
+  const v = el.dataset.token !== undefined ? el.dataset.token : el.value;
+  if (!v) { alert('现在还没有可复制的内容 —— 先把 NapCat 启动起来。'); return; }
+  try {
+    await navigator.clipboard.writeText(v);
+    alert(label + ' 已复制：' + v);
+  } catch {
+    // clipboard API 在 http://127.0.0.1 上一般是可用的，兜底用选中 + execCommand
+    el.removeAttribute('readonly');
+    el.select();
+    const ok = document.execCommand('copy');
+    el.setAttribute('readonly', 'readonly');
+    alert(ok ? (label + ' 已复制：' + v) : ('自动复制失败，请手动选中这一串：' + v));
+  }
+}
+$('btnCopyUrl').onclick = () => copyField('ncWebuiUrl', 'WebUI 地址');
+$('btnCopyToken').onclick = () => copyField('ncWebuiToken', 'Token');
+
+$('btnNapcatWebui').onclick = async () => {
+  if (!ncWebuiUrl) await loadWebuiInfo();
+  window.open(ncWebuiUrl, '_blank');
+};
+
+// ---- 实时端口状态 ----
+async function refreshNcState() {
+  const el = $('ncState');
+  el.textContent = '检测中…';
+  try {
+    const r = await api('/api/napcat/state');
+    const parts = [];
+    parts.push(r.bootRunning ? 'NapCat 进程在' : 'NapCat 进程没在');
+    parts.push(r.webui ? 'WebUI:6099 通' : 'WebUI:6099 不通');
+    parts.push(r.loggedIn ? 'QQ 已登录(3001 通)' : 'QQ 未登录(3001 不通)');
+    el.textContent = parts.join(' · ');
+    el.style.color = r.loggedIn ? '#37d67a' : (r.webui ? '#ffb020' : '#ff6b6b');
+    if (r.webui) loadWebuiInfo();
+  } catch (e) {
+    el.textContent = '检测失败：' + e.message;
+    el.style.color = '#ff6b6b';
+  }
+}
+$('btnNcState').onclick = refreshNcState;
+
+$('btnNapcat').onclick = async () => {
+  const btn = $('btnNapcat');
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = '正在发起启动…';
+  try {
+    const r = await api('/api/napcat/start', {});
+    if (r.ok) {
+      const lines = [];
+      lines.push(r.note || '已发起启动');
+      if (!r.botRunning && !r.botStarted) {
+        lines.push('', '如果还没扫码，先在弹出的 QQ 窗口扫码登录；登录完这里会自动连上。');
+      }
+      alert(lines.join('\n'));
+    } else {
+      alert('启动没成功\n\n' + (r.error || '未知错误') + (r.hint ? '\n\n' + r.hint : ''));
+    }
+  } catch (e) {
+    alert('请求失败：' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+    setTimeout(refreshNcState, 1500);
+  }
+};
+
+// 页面打开时先刷一次状态，知道 NapCat 现在是什么情况
+setTimeout(refreshNcState, 300);
+setTimeout(loadWebuiInfo, 500);
+
+
+$('btnShowPersona').onclick = async () => { const r = await api('/api/persona'); $('personaOut').textContent = r.persona || r.error || ''; };
+$('btnClearStyle').onclick = async () => { const r = await api('/api/style/clear', {}); $('personaHint').textContent = r.note || r.error; };
+$('btnRelearn').onclick = async () => { const r = await api('/api/style/relearn', {}); $('personaHint').textContent = r.note || r.error; refreshStatus(); };
+$('btnApplyPersona').onclick = async () => {
+  const desc = $('persona_input').value.trim();
+  if (!desc) { $('personaHint').textContent = '先写点性格描述'; return; }
+  await api('/api/config', { persona: { stylePrompt: desc } });
+  await api('/api/bot/stop', {});
+  await api('/api/bot/start', {});
+  $('personaHint').textContent = '性格已应用并重启机器人 ✓';
+  refreshStatus();
+};
+
+$('btnBotStart').onclick = async () => { const r = await api('/api/bot/start', {}); if(r.error) alert(r.error); refreshStatus(); };
+$('btnBotStop').onclick = async () => { await api('/api/bot/stop', {}); refreshStatus(); };
+
+$('btnQQUpgrade').onclick = async () => {
+  const r = await api('/api/qq/upgrade', {});
+  $('qqHint').textContent = r.note || r.error;
+};
+
+// ---- status + logs polling ----
+let statusTimer = setInterval(refreshStatus, 2000);
+async function refreshStatus() {
+  const s = await api('/api/bot/status');
+  const state = s.running ? '机器人运行中' : '机器人未启动';
+  $('botDot').className = 'dot ' + (s.running?'on':'off');
+  $('botState').textContent = state;
+
+  const st = await api('/api/bot/stats');
+  const sc = $('st_conn');
+  sc.className = 'pill ' + (st.connected ? 'on' : 'off');
+  sc.textContent = 'OneBot:' + (st.connected ? '在线' : '离线') + (s.running ? '' : ' ·未启动');
+  $('st_replies').textContent = '今日已回:' + (st.repliesToday || 0);
+  $('st_last').textContent = st.lastFrom ? ('最近回复对象:' + st.lastFrom) : '';
+
+  const lg = await api('/api/logs');
+  const logEl = $('botLog');
+  logEl.textContent = (lg.logs||[]).slice(-300).join('\n');
+
+  const rec = await api('/api/record/status');
+  const pill = $('recPill');
+  pill.className = 'pill ' + (rec.enabled?'on':'off');
+  pill.textContent = '录制:' + (rec.enabled?'开':'关');
+}
+
+// ---- recording / export / style ----
+$('btnRecToggle').onclick = async () => {
+  const st = await api('/api/record/status');
+  const r = await api('/api/record/set', { enabled: !st.enabled });
+  $('recHint').textContent = r.enabled ? '录制已开启：之后机器人看到的双方消息都会记录。' : '录制已停止。';
+};
+
+$('btnExport').onclick = async () => {
+  const userId = $('rec_user').value.trim();
+  if (!userId) return alert('请先填目标 QQ 号');
+  const r = await api('/api/record/export', { userId });
+  if (r.ok) $('recHint').textContent = `已导出 ${r.path}（我 ${r.myCount} 条 / 对方 ${r.themCount} 条）`;
+  else $('recHint').textContent = r.error;
+};
+
+$('btnStyle').onclick = async () => {
+  const userId = $('rec_user').value.trim();
+  const r = await api('/api/record/style', { userId });
+  $('styleOut').textContent = r.style || r.error;
+};
+
+$('btnPasteStyle').onclick = async () => {
+  const samples = $('pasteSamples').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const r = await api('/api/record/style', { samples });
+  $('styleOut').textContent = r.style || r.error;
+};
+
+const applyStyle = async () => {
+  const style = $('styleOut').textContent.trim();
+  if (!style) return alert('先在上方生成风格描述');
+  const r = await api('/api/record/applyStyle', { style });
+  alert(r.ok ? '已写入 config.json 的 persona.stylePrompt ✓' : r.error);
+};
+$('btnApplyStyle').onclick = applyStyle;
+$('btnApplyStyle2').onclick = applyStyle;
+
+loadConfig();
+refreshStatus();
+
+// ============================================================
+//  AI 性格
+// ============================================================
+let P_META = null;
+let P_STATE = { preset:'buddy', customStyle:'', params:{}, catchphrases:[], forbiddenWords:[], botNickname:'', ownerCall:'' };
+let previewScene = 'private';
+
+async function loadPersonaMeta() {
+  P_META = await api('/api/persona/meta');
+  const cur = P_META.current || {};
+  P_STATE = {
+    preset: cur.preset || 'buddy',
+    customStyle: cur.customStyle || '',
+    params: cur.params || {},
+    catchphrases: cur.catchphrases || [],
+    forbiddenWords: cur.forbiddenWords || [],
+    botNickname: cur.botNickname || '',
+    ownerCall: cur.ownerCall || ''
+  };
+  renderPresets();
+  renderParams();
+  $('p_custom').value = P_STATE.customStyle;
+  $('p_catch').value = (P_STATE.catchphrases||[]).join('\n');
+  $('p_forbid').value = (P_STATE.forbiddenWords||[]).join('\n');
+  $('p_botnick').value = P_STATE.botNickname;
+  $('p_ownercall').value = P_STATE.ownerCall;
+  $('learnedStyle').textContent = cur.stylePrompt || '（还没学到风格。多发点消息，或用下面的按钮重新学）';
+  refreshPreview();
+  loadLearnedRefresh();
+}
+
+function renderPresets() {
+  const box = $('presetGrid');
+  const list = [...P_META.presets, { id:'custom', name:'自定义', emoji:'✏️', intro:'不用预设，完全按我自己写的描述来。', params:{} }];
+  box.innerHTML = list.map(p => `
+    <div class="preset ${P_STATE.preset===p.id?'sel':''}" data-id="${p.id}">
+      <div class="pe">${p.emoji}</div>
+      <div class="pn">${p.name}</div>
+      <div class="pi">${p.intro}</div>
+    </div>`).join('');
+  box.querySelectorAll('.preset').forEach(el => el.onclick = () => {
+    P_STATE.preset = el.dataset.id;
+    // 切预设时把参数重置成该预设的默认值
+    const p = P_META.presets.find(x => x.id === el.dataset.id);
+    P_STATE.params = p ? { ...p.params } : {};
+    renderPresets();
+    renderParams();
+    updateCustomHint();
+    refreshPreview();
+  });
+  updateCustomHint();
+}
+
+/** 选了「自定义」时，把下面的输入框高亮出来，别让人找不到地方输入 */
+function updateCustomHint() {
+  const isCustom = P_STATE.preset === 'custom';
+  const row = $('customStyleRow');
+  const hint = $('customStyleHint');
+  const label = $('customStyleLabel');
+  if (isCustom) {
+    row.style.boxShadow = '0 0 0 2px var(--accent)';
+    row.style.borderRadius = '10px';
+    row.style.padding = '12px';
+    label.innerHTML = '✏️ <b>在这里写你的性格</b>（你选了「自定义」，下面这段就是全部性格设定）';
+    hint.textContent = '想怎么写就怎么写，比如：说话爱用「绝了」；不喜欢说「好的」只说「行」；别人问问题先反问一句。';
+  } else {
+    row.style.boxShadow = '';
+    row.style.padding = '';
+    label.textContent = '性格补充描述（叠加在上面选中的预设之上，优先级更高）';
+    hint.textContent = '';
+  }
+}
+
+function renderParams() {
+  const box = $('paramBox');
+  const meta = P_META.paramMeta;
+  const levels = P_META.stickerLevels;
+  let html = '';
+  for (const [key, m] of Object.entries(meta)) {
+    const v = P_STATE.params[key] ?? Math.round((m.min+m.max)/2);
+    html += `
+      <div class="slider-row">
+        <label>${m.label}</label>
+        <input type="range" data-p="${key}" min="${m.min}" max="${m.max}" step="1" value="${v}" />
+        <div class="slider-val" data-v="${key}">${v} · ${v<= (m.min+1) ? m.low : (v >= (m.max-1) ? m.high : '中等')}</div>
+      </div>`;
+  }
+  // 表情包频率
+  const sl = P_STATE.params.stickerLevel || 'mid';
+  html += `
+    <div class="row" style="margin-top:8px">
+      <label>表情包频率</label>
+      <select id="p_stickerLevel">
+        ${levels.map(l => `<option value="${l.id}" ${l.id===sl?'selected':''}>${l.label} — ${l.desc}</option>`).join('')}
+      </select>
+    </div>`;
+  box.innerHTML = html;
+
+  box.querySelectorAll('input[type=range]').forEach(r => {
+    r.oninput = () => {
+      const k = r.dataset.p;
+      const m = meta[k];
+      const v = Number(r.value);
+      P_STATE.params[k] = v;
+      box.querySelector(`[data-v="${k}"]`).textContent = `${v} · ${v <= (m.min+1) ? m.low : (v >= (m.max-1) ? m.high : '中等')}`;
+      schedulePreview();
+    };
+  });
+  $('p_stickerLevel').onchange = (e) => { P_STATE.params.stickerLevel = e.target.value; refreshPreview(); };
+}
+
+function collectPersona() {
+  return {
+    preset: P_STATE.preset,
+    customStyle: $('p_custom').value.trim(),
+    params: P_STATE.params,
+    catchphrases: $('p_catch').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean),
+    forbiddenWords: $('p_forbid').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean),
+    botNickname: $('p_botnick').value.trim(),
+    ownerCall: $('p_ownercall').value.trim()
+  };
+}
+
+let previewTimer = null;
+function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(refreshPreview, 300); }
+
+async function refreshPreview() {
+  const r = await api('/api/persona/preview', { persona: collectPersona(), scene: previewScene });
+  $('personaPreview').textContent = r.prompt || r.error || '';
+  $('previewLen').textContent = r.length ? (r.length + ' 字 · ' + (previewScene==='group'?'群聊版':'私聊版')) : '';
+}
+
+async function loadLearnedRefresh() {
+  try {
+    const c = await api('/api/config');
+    $('learnedStyle').textContent = (c.persona && c.persona.stylePrompt) || '（还没学到风格。多发点消息，或用下面的按钮重新学）';
+  } catch(e) {}
+}
+
+['p_custom','p_catch','p_forbid','p_botnick','p_ownercall'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', schedulePreview);
+});
+$('btnScenePrivate').onclick = () => { previewScene='private'; refreshPreview(); };
+$('btnSceneGroup').onclick = () => { previewScene='group'; refreshPreview(); };
+$('btnPersonaPreview').onclick = refreshPreview;
+
+$('btnPersonaSave').onclick = async () => {
+  const r = await api('/api/persona/save', collectPersona());
+  $('personaHint2').textContent = r.ok ? '已保存 ✓ 机器人下次回话就用新性格（无需重启）' : ('保存失败: ' + r.error);
+  refreshPreview();
+  loadLearnedRefresh();
+};
+
+// ---- ④ 号主专属态度 ----
+async function loadOwner() {
+  const c = await api('/api/config');
+  const o = (c.persona && c.persona.owner) || {};
+  $('o_enabled').checked = o.enabled !== false;
+  $('o_ids').value = (o.userIds || []).join(', ');
+  $('o_style').value = o.style || '';
+}
+$('btnOwnerSave').onclick = async () => {
+  const ids = $('o_ids').value.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean);
+  const saved = await api('/api/persona/save', {
+    owner: { enabled: $('o_enabled').checked, userIds: ids, style: $('o_style').value.trim() }
+  });
+  $('ownerHint').textContent = saved.ok ? ('已保存 ✓ 对 ' + ids.length + ' 个号生效（无需重启）') : '保存失败';
+  refreshPreview();
+};
+
+// ---- ⑤ 回复长度 ----
+async function loadLength() {
+  const c = await api('/api/config');
+  $('seg_min2').value = (c.bot && c.bot.replySegmentsMin) || 3;
+  $('seg_max2').value = (c.bot && c.bot.replySegmentsMax) || 4;
+  $('max_tokens2').value = (c.deepseek && c.deepseek.maxTokens) || 2000;
+  $('seg_delay2').value = (c.bot && c.bot.replySegmentDelayMs) || 1200;
+}
+$('btnLenSave').onclick = async () => {
+  const min = Number($('seg_min2').value)||3;
+  const max = Number($('seg_max2').value)||4;
+  if (min > max) { $('lenHint').textContent = '最少数不能大于最多数'; return; }
+  const r = await api('/api/config', {
+    bot: { replySegmentsMin: min, replySegmentsMax: max, replySegmentDelayMs: Number($('seg_delay2').value)||1200 },
+    deepseek: { maxTokens: Number($('max_tokens2').value)||2000 }
+  });
+  $('lenHint').textContent = r.ok ? '已保存 ✓ 立即生效' : '保存失败';
+};
+
+$('btnClearStyle2').onclick = async () => {
+  const r = await api('/api/style/clear', {});
+  $('personaHint2').textContent = r.note || r.error;
+  loadLearnedRefresh();
+};
+$('btnRelearn2').onclick = async () => {
+  const r = await api('/api/style/relearn', {});
+  $('personaHint2').textContent = r.note || r.error;
+  refreshStatus();
+  setTimeout(loadLearnedRefresh, 3000);
+};
+
+// ============================================================
+//  表情包
+// ============================================================
+let ST_CONFIG = null;
+let stFilter = null;
+
+async function loadStickerConfig() {
+  const c = await api('/api/config');
+  ST_CONFIG = c;
+  const s = c.bot.sticker || {};
+  $('st_enabled').value = (s.enabled !== false) ? '1' : '0';
+  $('st_face').value = (s.allowFace !== false) ? '1' : '0';
+  $('st_max').value = s.maxPerReply ?? 1;
+  $('st_dir').value = s.dir || 'stickers';
+}
+
+[['st_enabled'],['st_face'],['st_max'],['st_dir']].forEach(([id]) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', async () => {
+    await api('/api/config', { bot: { sticker: {
+      enabled: $('st_enabled').value === '1',
+      allowFace: $('st_face').value === '1',
+      maxPerReply: Number($('st_max').value) || 1,
+      dir: $('st_dir').value.trim() || 'stickers'
+    }}});
+    $('stHint').textContent = '已保存 ✓';
+    loadStickerList();
+  });
+});
+
+async function loadStickerList() {
+  const data = await api('/api/sticker/list');
+  if (!data.ok) { $('stHint').textContent = '读取失败'; return; }
+  $('stCount').textContent = `共 ${data.count} 张 · ${data.dir}`;
+
+  // 标签栏
+  const tags = Object.entries(data.tags || {}).sort((a,b)=>b[1].length-a[1].length);
+  $('tagHint').textContent = tags.map(t=>t[0]).join('、') || '（暂无，放图后自动识别）';
+  const bar = $('tagBar');
+  bar.innerHTML = `<span class="tagn ${stFilter===null?'on':''}" data-t="">全部 (${data.count})</span>` +
+    tags.map(([k,v]) => `<span class="tagn ${stFilter===k?'on':''}" data-t="${k}">${k} (${v.length})</span>`).join('');
+  bar.querySelectorAll('.tagn').forEach(el => el.onclick = () => { stFilter = el.dataset.t || null; renderStickerGrid(data); });
+
+  renderStickerGrid(data);
+}
+
+function renderStickerGrid(data) {
+  const imgs = stFilter ? (data.tags[stFilter] || []) : data.images.map(i=>i.rel);
+  const grid = $('stickerGrid');
+  $('stickerEmpty').style.display = data.count ? 'none' : 'block';
+  grid.innerHTML = imgs.map(rel => {
+    const info = data.images.find(i => i.rel === rel) || { tags: [] };
+    const tag = (info.tags && info.tags.length) ? info.tags.join('/') : '无标签(随机)';
+    return `<div class="sticker-cell">
+      <img src="/sticker-file/${encodeURIComponent(rel)}" loading="lazy" alt="" />
+      <div class="tagline" title="${rel}">${tag}</div>
+      <button class="kill" data-rel="${rel}" title="删除">×</button>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.kill').forEach(b => b.onclick = async () => {
+    if (!confirm('确定删除这张表情包？\n' + b.dataset.rel)) return;
+    const r = await api('/api/sticker/delete', { rel: b.dataset.rel });
+    if (r.ok) { $('stHint').textContent = '已删除 ✓'; loadStickerList(); }
+    else alert(r.error);
+  });
+  // 标签栏高亮同步
+  document.querySelectorAll('#tagBar .tagn').forEach(el => el.classList.toggle('on', (el.dataset.t || null) === stFilter));
+}
+
+$('btnOpenDir').onclick = async () => { const r = await api('/api/sticker/open-dir', {}); $('stHint').textContent = r.ok ? ('已打开：' + r.dir) : r.error; };
+$('btnRescan').onclick = () => { loadStickerList(); $('stHint').textContent = '已重新扫描 ✓'; };
+
+// ---- 自动抓取 ----
+async function loadCatch() {
+  const c = await api('/api/config');
+  const cs = (c.bot && c.bot.catchSticker) || {};
+  $('cs_enabled').checked = cs.enabled !== false;
+  $('cs_maxkb').value = cs.maxKB ?? 4880;
+  $('cs_tagevery').value = cs.tagEvery ?? 3;
+  const st = await api('/api/sticker/caught');
+  if (st.ok) $('csHint').textContent = `已抓 ${st.count} 张（${Math.round((st.bytes||0)/1024)} KB）`;
+}
+$('btnCsSave').onclick = async () => {
+  await api('/api/config', { bot: { catchSticker: {
+    enabled: $('cs_enabled').checked,
+    maxKB: Number($('cs_maxkb').value) || 4880,
+    tagEvery: Number($('cs_tagevery').value) || 3
+  }}});
+  $('csHint').textContent = '已保存 ✓ 立即生效';
+};
+$('btnCsOpen').onclick = async () => {
+  const r = await api('/api/sticker/caught');
+  if (r.ok && r.dir) {
+    await api('/api/config', {});
+    // 用与表情库相同的方式打开目录
+    const r2 = await api('/api/sticker/open-dir', {});
+    $('csHint').textContent = '抓取目录：' + r.dir;
+  }
+};
+$('btnCsClear').onclick = async () => {
+  if (!confirm('确定清空所有自动抓来的表情包？\n（你原来手动分类的表情包不受影响）')) return;
+  const r = await api('/api/sticker/caught/clear', {});
+  $('csHint').textContent = r.ok ? `已清空 ${r.removed} 张` : '清空失败';
+  loadStickerList();
+};
+
+$('btnTestSticker').onclick = async () => {
+  const kw = $('st_testkw').value.trim() || '笑死';
+  const r = await api('/api/sticker/test', { keyword: kw });
+  if (r.ok) {
+    $('stTestOut').innerHTML = `关键词「${kw}」→ 匹配到：<b>${r.rel}</b>\n\n<img src="/sticker-file/${encodeURIComponent(r.rel)}" style="max-width:180px;border-radius:8px;margin-top:8px" />`;
+  } else {
+    $('stTestOut').textContent = '没匹配到：' + r.error;
+  }
+};
+
+async function loadFaceChips() {
+  const s = await api('/api/sticker/summary');
+  $('faceChips').innerHTML = (s.faceTable||[]).map(([name,id]) =>
+    `<span class="chip" title="写 [FACE]${id}[/FACE] 即可发送"><span class="nn">${name}</span><span>${id}</span></span>`
+  ).join('');
+}
+
+// ============================================================
+//  群聊
+// ============================================================
+let groupAllowed = [];
+let groupAll = false;
+let groupLoaded = false;   // 防止「还没加载完就保存」把白名单清空
+
+async function loadGroupConfig() {
+  const st = await api('/api/group/status');
+  $('g_enabled').checked = st.enabled;
+  $('g_replyAt').checked = st.replyWhenAt;
+  $('g_judge').checked = st.autoJudge;
+  $('g_threshold').value = st.judgeThreshold;
+  $('g_cooldown').value = st.replyCooldownMs;
+  $('g_hourly').value = st.maxRepliesPerGroupPerHour;
+  $('g_judgemodel').value = st.judgeModel || '';
+  groupAll = (st.allowedGroups||[]).includes('*');
+  groupAllowed = (st.allowedGroups||[]).filter(x=>x!=='*');
+  $('g_all').checked = groupAll;
+  groupLoaded = true;
+  renderGroups();
+}
+
+function renderGroups() {
+  $('groupListBox').style.display = groupAll ? 'none' : 'block';
+  const box = $('groupChips');
+  if (!groupAllowed.length) { box.innerHTML = '<span class="empty">还没添加群。点「从 QQ 拉取群列表」可以直接选。</span>'; return; }
+  box.innerHTML = groupAllowed.map(g => `<span class="chip"><span>${g}</span><button class="del" data-g="${g}">×</button></span>`).join('');
+  box.querySelectorAll('.del').forEach(b => b.onclick = () => { groupAllowed = groupAllowed.filter(x=>x!==b.dataset.g); renderGroups(); });
+}
+
+function collectGroup() {
+  return {
+    enabled: $('g_enabled').checked,
+    replyWhenAt: $('g_replyAt').checked,
+    autoJudge: $('g_judge').checked,
+    judgeThreshold: Number($('g_threshold').value)||3,
+    replyCooldownMs: Number($('g_cooldown').value)||20000,
+    maxRepliesPerGroupPerHour: Number($('g_hourly').value)||20,
+    judgeModel: $('g_judgemodel').value.trim(),
+    allowedGroups: groupAll ? ['*'] : groupAllowed
+  };
+}
+
+$('g_all').onchange = () => { groupAll = $('g_all').checked; renderGroups(); };
+$('btnAddGroup').onclick = () => {
+  const v = $('groupInput').value.trim();
+  if (v && !groupAllowed.includes(v)) groupAllowed.push(v);
+  $('groupInput').value = '';
+  renderGroups();
+};
+$('btnGroupSave').onclick = async () => {
+  if (!groupLoaded) { $('groupHint').textContent = '还在读取当前设置，请稍等一秒再点保存'; return; }
+  // 双保险：开关是开的、但白名单为空且不是「全部」时，提醒而不是静默清空
+  if ($('g_enabled').checked && !groupAll && groupAllowed.length === 0) {
+    if (!confirm('群白名单是空的，这样机器人不会回复任何群。\n\n确定要保存吗？')) return;
+  }
+  const r = await api('/api/config', { bot: { group: collectGroup() } });
+  $('groupHint').textContent = r.ok ? '已保存 ✓ 群聊设置立即生效' : '保存失败';
+  if (r.ok) loadGroupConfig();
+};
+
+$('btnLoadGroups').onclick = async () => {
+  $('groupLiveHint').textContent = '正在连接 OneBot 拉取群列表…';
+  const r = await api('/api/group/live');
+  if (!r.ok) { $('groupLiveHint').textContent = '拉取失败：' + r.error + '（请先启动机器人和 NapCat）'; return; }
+  $('groupLiveHint').textContent = `拉到 ${r.groups.length} 个群，点群名加入白名单：`;
+  const box = $('groupChips');
+  box.innerHTML = (r.groups||[]).map(g =>
+    `<span class="chip" style="cursor:pointer" data-add="${g.group_id}"><span>${g.group_name||g.group_id}</span><span class="nn">${g.group_id} · ${g.member_count||'?'}人</span></span>`
+  ).join('') || '<span class="empty">这个 QQ 还没加入任何群</span>';
+  box.querySelectorAll('[data-add]').forEach(el => el.onclick = () => {
+    const g = el.dataset.add;
+    if (!groupAllowed.includes(g)) groupAllowed.push(g);
+    renderGroups();
+    $('groupLiveHint').textContent = `已加入白名单：${g}（记得点下面的保存）`;
+  });
+};
+
+// ============================================================
+//  API 通道
+// ============================================================
+let LLM_INFO = null;
+
+async function loadLLM() {
+  const r = await api('/api/llm/info');
+  LLM_INFO = r;
+  const llm = r.llm || {};
+  const oa = llm.openai || {};
+  const ds = r.deepseek || {};
+  const c = await api('/api/config');
+
+  $('llm_active').value = llm.active || 'deepseek';
+  $('ds_key2').value = (c.deepseek && c.deepseek.apiKey) || '';
+  $('ds_base2').value = ds.baseUrl || 'https://api.deepseek.com';
+  $('ds_model2').value = ds.model || 'deepseek-chat';
+  $('ds_temp2').value = (c.deepseek && c.deepseek.temperature) ?? 0.8;
+
+  $('oa_name').value = oa.name || '';
+  $('oa_base').value = oa.baseUrl || '';
+  $('oa_key').value = oa.apiKey || '';
+  $('oa_model').value = oa.model || '';
+  $('oa_temp').value = oa.temperature ?? 0.8;
+  $('oa_timeout').value = oa.timeoutMs ?? 60000;
+
+  const pur = llm.purposes || {};
+  $('purpose_reply').value = pur.reply || '';
+  $('purpose_judge').value = pur.judge || '';
+  $('purpose_style').value = pur.style || '';
+
+  const res = r.resolved || {};
+  $('llmHint').textContent = `当前回复通道：${res.reply?.name} · ${res.reply?.model || '(未填模型)'}`;
+}
+
+function collectLLM() {
+  return {
+    active: $('llm_active').value,
+    purposes: {
+      reply: $('purpose_reply').value || undefined,
+      judge: $('purpose_judge').value || undefined,
+      style: $('purpose_style').value || undefined
+    },
+    openai: {
+      name: $('oa_name').value.trim() || 'OpenAI 兼容通道',
+      baseUrl: $('oa_base').value.trim(),
+      apiKey: $('oa_key').value.trim(),
+      model: $('oa_model').value.trim(),
+      temperature: Number($('oa_temp').value),
+      timeoutMs: Number($('oa_timeout').value) || 60000
+    }
+  };
+}
+function collectDeepseekFromTab5() {
+  return {
+    apiKey: $('ds_key2').value.trim(),
+    baseUrl: $('ds_base2').value.trim() || 'https://api.deepseek.com',
+    model: $('ds_model2').value.trim() || 'deepseek-chat',
+    temperature: Number($('ds_temp2').value)
+  };
+}
+
+$('btnTestDS').onclick = async () => {
+  $('dsTestHint').textContent = '测试中…';
+  const r = await api('/api/llm/test', { deepseek: collectDeepseekFromTab5(), purpose:'reply' });
+  $('dsTestHint').textContent = r.ok ? `✓ 通了（${r.ms}ms）模型 ${r.model}` : `✗ ${r.error}`;
+};
+
+$('btnTestOA').onclick = async () => {
+  $('oaTestHint').textContent = '测试中…（本地模型首次加载会慢，请稍等）';
+  const r = await api('/api/llm/test', { llm: collectLLM(), purpose:'reply' });
+  $('oaTestHint').textContent = r.ok ? `✓ 通了（${r.ms}ms）${r.model}` : `✗ ${r.error}`;
+};
+
+$('btnListModels').onclick = async () => {
+  $('modelList').textContent = '拉取中…';
+  const r = await api('/api/llm/models', { llm: collectLLM() });
+  if (!r.ok) { $('modelList').textContent = '拉取失败：' + r.error; return; }
+  $('modelList').innerHTML = '可用模型（点一下填进模型框）：<br />' + r.models.map(m =>
+    `<span class="chip" style="cursor:pointer" data-m="${m}">${m}</span>`
+  ).join(' ');
+  $('modelList').querySelectorAll('[data-m]').forEach(el => el.onclick = () => { $('oa_model').value = el.dataset.m; });
+};
+
+$('btnLLMSave').onclick = async () => {
+  await api('/api/config', { deepseek: collectDeepseekFromTab5(), llm: collectLLM() });
+  $('llmHint').textContent = '已保存 ✓ 机器人下次调用就用新通道';
+};
+
+// 初始化各页面数据
+loadPersonaMeta();
+loadOwner();
+loadLength();
+loadStickerConfig().then(loadStickerList);
+loadCatch();
+loadFaceChips();
+loadGroupConfig();
+loadLLM();
+
+// ============================================================
+//  小本本
+// ============================================================
+let nbSelected = null;
+
+const KIND_LABEL = { grudge: '记仇', favor: '记好', trait: '印象', event: '事件' };
+const KIND_COLOR = { grudge: 'var(--red)', favor: 'var(--green)', trait: 'var(--accent)', event: '#c9a227' };
+
+async function loadNotebookList() {
+  const r = await api('/api/notebook/list');
+  const box = $('nbPeople');
+  const people = (r.people || []);
+  $('nbEmpty').style.display = people.length ? 'none' : 'block';
+  if (!people.length) { box.innerHTML = ''; return; }
+  box.innerHTML = people.map(p => `
+    <span class="chip" style="cursor:pointer;${nbSelected===p.userId?'border-color:var(--accent);background:rgba(79,140,255,.15)':''}" data-u="${p.userId}">
+      <span>${p.userId}</span>
+      <span class="nn">${p.count}条</span>
+    </span>`).join('');
+  box.querySelectorAll('[data-u]').forEach(el => el.onclick = () => { nbSelected = el.dataset.u; loadNotebookList(); loadNotebookDetail(nbSelected); });
+  if (r.people?.length) $('nbHint').textContent = `共 ${r.people.length} 个人有笔记`;
+}
+
+async function loadNotebookDetail(userId) {
+  if (!userId) return;
+  const r = await api('/api/notebook/get?userId=' + encodeURIComponent(userId));
+  if (!r.ok) { $('nbDetailCard').style.display = 'none'; return; }
+  $('nbDetailCard').style.display = 'block';
+  $('nbWho').textContent = `（QQ ${userId}）`;
+  $('nbStatGrudge').textContent = '记仇:' + (r.stats.by.grudge || 0);
+  $('nbStatFavor').textContent = '记好:' + (r.stats.by.favor || 0);
+  $('nbStatTrait').textContent = '印象:' + (r.stats.by.trait || 0);
+  $('nbStatEvent').textContent = '事件:' + (r.stats.by.event || 0);
+
+  // ---- 说话策略 ----
+  const s = r.strategy;
+  if (s && s.summary) {
+    $('nbStrategyBox').style.display = 'block';
+    $('nbStrategyEmpty').style.display = 'none';
+    $('nbStrategyMeta').textContent = `基于 ${s.basedOn || 0} 条记录 · ${new Date(s.at).toLocaleString('zh-CN')}`;
+    let html = `<div style="font-size:14px">${s.summary}</div>`;
+    if (s.tone) html += `<div style="margin-top:8px"><span class="hint">语气：</span>${s.tone}</div>`;
+    if (s.doList?.length) {
+      html += `<div style="margin-top:8px"><span style="color:var(--green)">该做：</span>`
+        + s.doList.map(x => `<div style="padding-left:12px">· ${x}</div>`).join('') + `</div>`;
+    }
+    if (s.dontList?.length) {
+      html += `<div style="margin-top:8px"><span style="color:var(--red)">别做：</span>`
+        + s.dontList.map(x => `<div style="padding-left:12px">· ${x}</div>`).join('') + `</div>`;
+    }
+    $('nbStrategyBody').innerHTML = html;
+  } else {
+    $('nbStrategyBox').style.display = 'none';
+    $('nbStrategyEmpty').style.display = 'block';
+  }
+
+  const box = $('nbNotes');
+  if (!r.notes.length) { box.innerHTML = '<div class="empty">这个人的笔记是空的</div>'; return; }
+  box.innerHTML = r.notes.map(n => {
+    const when = new Date(n.at).toLocaleString('zh-CN');
+    const place = n.place === 'private' ? '私聊' : (String(n.place||'').startsWith('group:') ? '群' + String(n.place).slice(6) : n.place || '');
+    return `<div class="msg" style="border-left:3px solid ${KIND_COLOR[n.kind]||'var(--border)'};margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <b style="color:${KIND_COLOR[n.kind]||'var(--text)'}">${KIND_LABEL[n.kind]||n.kind}</b>
+        <span class="hint" style="font-size:11px">强度${n.intensity}/5 · ${place} · ${when}</span>
+        <button class="del" data-id="${n.id}" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer">×</button>
+      </div>
+      <div>${n.gist}</div>
+      ${n.quote ? `<div class="hint" style="margin-top:4px">原话：「${n.quote}」</div>` : ''}
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.del').forEach(b => b.onclick = async () => {
+    if (!confirm('删掉这条记录？')) return;
+    await api('/api/notebook/delete', { userId, id: b.dataset.id });
+    loadNotebookDetail(userId);
+    loadNotebookList();
+  });
+}
+
+$('btnNbRefresh').onclick = () => { loadNotebookList(); if (nbSelected) loadNotebookDetail(nbSelected); };
+$('btnNbRegen').onclick = async () => {
+  if (!nbSelected) return;
+  $('btnNbRegen').disabled = true;
+  $('btnNbRegen').textContent = '生成中…';
+  const r = await api('/api/notebook/strategy', { userId: nbSelected });
+  $('btnNbRegen').disabled = false;
+  $('btnNbRegen').textContent = '重新生成';
+  if (r.ok) loadNotebookDetail(nbSelected);
+  else alert('生成失败：' + r.error);
+};
+$('btnNbClear').onclick = async () => {
+  if (!nbSelected) return;
+  if (!confirm(`清空 QQ ${nbSelected} 的全部笔记？`)) return;
+  await api('/api/notebook/clear', { userId: nbSelected });
+  loadNotebookList(); loadNotebookDetail(nbSelected);
+};
+$('btnNbAdd').onclick = async () => {
+  const userId = $('nbAddUser').value.trim();
+  const gist = $('nbAddGist').value.trim();
+  if (!userId || !gist) { $('nbAddHint').textContent = 'QQ 号和概括都要填'; return; }
+  const r = await api('/api/notebook/add', {
+    userId, kind: $('nbAddKind').value, gist,
+    quote: $('nbAddQuote').value.trim(), place: 'manual'
+  });
+  if (r.ok) {
+    $('nbAddHint').textContent = '已添加 ✓';
+    $('nbAddGist').value = ''; $('nbAddQuote').value = '';
+    nbSelected = userId;
+    loadNotebookList(); loadNotebookDetail(userId);
+  } else $('nbAddHint').textContent = '失败：' + r.error;
+};
+
+loadNotebookList();
+
+// ============================================================
+//  掉线诊断
+// ============================================================
+async function loadDiag() {
+  const r = await api('/api/diag');
+  if (!r.ok) { $('diagHint').textContent = '读取失败'; return; }
+  const recs = r.records || [];
+  $('diagEmpty').style.display = recs.length ? 'none' : 'block';
+  $('diagHint').textContent = recs.length ? `共 ${recs.length} 条记录` : '';
+  $('diagList').innerHTML = recs.map((t, i) => {
+    const firstLine = t.split('\n')[0] || '';
+    const when = (t.match(/掉线时间：(.*)/) || [])[1] || '';
+    const why = (t.match(/原因：(.*)/) || [])[1] || '';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <b>${when}</b>
+        <span class="hint" style="font-size:12px">${why}</span>
+      </div>
+      <pre style="background:#0b0d10;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;line-height:1.5;overflow:auto;max-height:280px;margin:0">${t.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>
+    </div>`;
+  }).join('');
+}
+$('btnDiagRefresh').onclick = loadDiag;
+$('btnDiagSnap').onclick = async () => {
+  $('diagHint').textContent = '抓取中…';
+  await api('/api/diag/snapshot', {});
+  $('diagHint').textContent = '已抓取 ✓';
+  loadDiag();
+};
+loadDiag();
+</script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+{
+  "_说明": "QQ 自动回复机器人 —— 配置文件模板。把本文件改名为 config.json 再改里面的值。改完保存，重启机器人生效。",
+  "_必填": "只需要改 3 个地方就能跑：① deepseek.apiKey 填你的 API Key；② bot.admin 填你自己的 QQ 号；③ bot.allowedUsers 填允许触发回复的 QQ 号（或用 [\"*\"] 表示所有人）。",
+  "_找帮助": "详细说明看同目录的 README.md 和「脚本对照表.md」。",
+
+  "onebot": {
+    "_说明": "和 NapCat 的连接设置。用默认值就行，除非你改了 NapCat 的端口。",
+    "mode": "forward-ws",
+    "host": "127.0.0.1",
+    "port": 3001,
+    "accessToken": "",
+    "reconnectDelayMs": 3000
+  },
+
+  "bot": {
+    "_说明": "机器人主设置。",
+    "enabled": true,
+    "allowedUsers": ["*"],
+    "_allowedUsers": "允许触发自动回复的 QQ 号列表。[\"*\"] = 所有人；也可以写 [\"12345678\",\"87654321\"] 只让指定的人用。填 [] 会让机器人完全不回复（新手常见问题）。",
+    "admin": ["你的QQ号"],
+    "_admin": "管理员 QQ 号，可以用指令控制机器人。必须填，否则指令都用不了。",
+    "commandPrefix": "/",
+    "timeWindow": {
+      "_说明": "生效时间段。enabled=false 表示全天在线。",
+      "enabled": false,
+      "start": "09:00",
+      "end": "23:00",
+      "timezone": "Asia/Shanghai"
+    },
+    "replyCooldownMs": 10000,
+    "_replyCooldownMs": "同一个人两条回复之间最少隔多少毫秒（防刷屏）。",
+    "maxAutoRepliesPerConversationPerHour": 12,
+    "_maxAutoRepliesPerConversationPerHour": "每小时内同一个人最多回几条。想放开就调大（比如 999999）。",
+    "respondWhenOffline": true,
+    "replySegments": 3,
+    "_replySegments": "回复拆成几段发出去（像真人打字那样，不是一大坨）。",
+    "replySegmentsMin": 3,
+    "replySegmentsMax": 5,
+    "replySegmentDelayMs": 5000,
+    "_replySegmentDelayMs": "每段之间隔多少毫秒。想一次发完就设 0。",
+    "minSegmentChars": 4,
+    "_minSegmentChars": "每段最少几个字（太短会跟相邻的合并）。",
+    "maxReplyChars": 150,
+    "_maxReplyChars": "整条回复最多几个字（防啰嗦）。",
+
+    "webSearch": {
+      "_说明": "让机器人遇到不知道的事可以联网查。",
+      "enabled": true
+    },
+
+    "learnStyle": {
+      "_说明": "学习你自己的说话风格。userId 填你自己（号主）的 QQ 号。",
+      "fromHistory": true,
+      "userId": "你的QQ号",
+      "maxSamples": 400
+    },
+
+    "antiWaste": {
+      "_说明": "刷屏拦截。有人疯狂刷消息时可以临时不理他。",
+      "enabled": false,
+      "windowMs": 60000,
+      "maxMessagesInWindow": 5,
+      "blockMs": 1800000,
+      "reply": [
+        "别刷了，我是AI，不浪费token。",
+        "再刷我就先不回了。"
+      ]
+    },
+
+    "lowBalance": {
+      "_说明": "余额不足提醒。DeepSeek 账户快没钱时通知你。",
+      "enabled": false,
+      "threshold": 1,
+      "checkMinutes": 10,
+      "notifyAdmin": "你的QQ号",
+      "replyCooldownMs": 600000,
+      "reply": [
+        "余额快见底了，先暂停自动回复。",
+        "（再聊真就欠费了，等充值再说。）"
+      ]
+    },
+
+    "sticker": {
+      "_说明": "表情包功能。把图片丢进 stickers/ 文件夹就能用。",
+      "enabled": true,
+      "dir": "stickers",
+      "allowFace": true,
+      "maxPerReply": 1,
+      "autoTag": true,
+      "_autoTag": "新丢进来的图自动用 AI 识别情绪并打标签（结果会缓存，不重复花钱）。"
+    },
+
+    "catchSticker": {
+      "_说明": "自动抓群里的表情包，收进 stickers/_自动抓取/ 自己也能发。",
+      "enabled": true,
+      "maxKB": 4880,
+      "_maxKB": "超过这个大小的图就不收（防止收进大图）。",
+      "tagEvery": 3,
+      "classify": true,
+      "_classify": "收之前先用 AI 判断是不是表情包：截图/照片/二维码直接丢掉。"
+    },
+
+    "selfMute": {
+      "_说明": "号主用 /闭嘴 让机器人自我禁言 + 反思自己说错了什么。仅限号主和管理员能用。",
+      "enabled": true,
+      "minutes": 2,
+      "_minutes": "默认静默多少分钟，也可以用 /闭嘴 5 临时指定。",
+      "opening": ["……", "好的，我闭嘴。"],
+      "closing": ["我安静 {$mins} 分钟，到点自己回来。", "（默默缩到角落去了）"],
+      "_closing": "{$mins} 会自动替换成分钟数。",
+      "lineDelayMs": 1200
+    },
+
+    "notebook": {
+      "_说明": "小本本 —— 机器人对每个人的印象笔记。只认人不认环境，私聊和群聊共用一本。有事才记：只在情绪波动或标志性事件时写。",
+      "enabled": true,
+      "maxNotesInPrompt": 8,
+      "_maxNotesInPrompt": "每次注入提示词最多带几条记录（别太多，省 token）。",
+      "includeUsed": true,
+      "requireQuote": true,
+      "_requireQuote": "必须有原话出处才允许记。这是防捏造的关键，建议别关。",
+      "strategyEnabled": true,
+      "_strategyEnabled": "是否根据记录自动总结「说话策略」（对每个人的语气/该做/别做）。",
+      "strategyMinNotes": 2,
+      "_strategyMinNotes": "至少攒几条记录才值得总结策略。"
+    },
+
+    "keepAwake": {
+      "_说明": "机器人运行期间阻止电脑睡眠。电脑一睡，NapCat 会变空壳，醒来后收发全废。",
+      "enabled": true,
+      "keepDisplayOn": false,
+      "_keepDisplayOn": "连屏幕也不让它关（默认只防睡眠，屏幕照常关）。"
+    },
+
+    "dropAlert": {
+      "_说明": "掉线告警 + 自动恢复。QQ 掉线时机器人发不出消息，所以走系统弹窗 + 桌面文件通知。",
+      "enabled": true,
+      "checkSeconds": 60,
+      "confirmTimes": 2,
+      "_confirmTimes": "连续几次异常才告警（防止网络抖动误报）。",
+      "diagnose": true,
+      "_diagnose": "掉线时抓一份系统现场快照，方便事后定位原因。",
+      "notify": true,
+      "writeFile": true,
+      "notifyOnRecover": true,
+      "autoRestart": true,
+      "_autoRestart": "自动尝试重启 QQ + NapCat。需要先跑一次 authorize-autorestart.bat（右键管理员）授权，否则每次都会弹 UAC 确认框。",
+      "restartCooldownMinutes": 10
+    },
+
+    "nsfwFilter": {
+      "_说明": "涩图/淫秽内容拦截。命中后骂回去 + 不收进表情库。",
+      "enabled": true,
+      "reply": [
+        "停，这东西别往我这儿发。",
+        "你当我这是回收站呢？再发一张我就当没看见你这个人了。",
+        "自己收好，别拿出来恶心别人。"
+      ],
+      "textReply": [
+        "你这话说的，自己不觉得脏吗。",
+        "换个话题，不然我先把你静音了。"
+      ]
+    },
+
+    "vision": {
+      "_说明": "让 AI 真的「看见」图片/表情包。如果换成本地纯文本模型（如 qwen3），要在这里关掉。",
+      "enabled": true,
+      "maxImages": 3
+    },
+
+    "replyToSelf": {
+      "_说明": "「我发的消息统统回复」：号主自己在聊天框里打的字，机器人都回。",
+      "enabled": false,
+      "includeGroups": true
+    },
+
+    "group": {
+      "_说明": "群聊设置。",
+      "enabled": false,
+      "allowedGroups": ["*"],
+      "_allowedGroups": "允许回复的群号，[\"*\"] 表示全部群。注意：全部群都回有可能被群主踢。",
+      "replyWhenAt": true,
+      "_replyWhenAt": "被 @ 时一定回。",
+      "autoJudge": true,
+      "_autoJudge": "没被 @ 时，让 AI 自己判断该不该插话。",
+      "judgeThreshold": 3,
+      "_judgeThreshold": "插话积极程度（1~5）：1=几乎不插话，2=很安静，3=正常，4=比较活跃，5=很爱接话。",
+      "replyCooldownMs": 20000,
+      "maxRepliesPerGroupPerHour": 20,
+      "judgeModel": "",
+      "_judgeModel": "判断插话用的模型。留空=跟回复用同一个。填个便宜的模型能省钱（在下面的 llm 通道里配）。"
+    }
+  },
+
+  "deepseek": {
+    "_说明": "DeepSeek 官方通道。apiKey 是必填项。",
+    "apiKey": "sk-在这里填你的API密钥",
+    "baseUrl": "https://api.deepseek.com",
+    "model": "deepseek-chat",
+    "temperature": 0.8,
+    "maxTokens": 1200,
+    "contextTurns": 6,
+    "_contextTurns": "每次带几轮上下文给 AI。调大更聪明但更贵。",
+    "timeoutMs": 60000
+  },
+
+  "llm": {
+    "_说明": "双通道配置。active='deepseek' 用官方通道；'openai' 用任意 OpenAI 兼容通道（中转站 / 本地模型）。purposes 可以按用途分流，例如让「群里插话判断」走本地模型省钱。",
+    "active": "deepseek",
+    "purposes": {},
+    "_purposes示例": { "reply": "deepseek", "judge": "openai", "style": "deepseek" },
+    "openai": {
+      "name": "OpenAI 兼容通道",
+      "baseUrl": "",
+      "_baseUrl示例": "填到 /v1 为止。Ollama: http://127.0.0.1:11434/v1 ；LM Studio: http://127.0.0.1:1234/v1 ；硅基流动: https://api.siliconflow.cn/v1",
+      "apiKey": "",
+      "model": "",
+      "temperature": 0.8,
+      "maxTokens": 800,
+      "timeoutMs": 60000
+    }
+  },
+
+  "persona": {
+    "_说明": "AI 的性格。preset 选内置预设，customStyle 是叠加在上面的自定义描述。",
+    "stylePrompt": "",
+    "personaFile": "",
+    "_personaFile": "也可以把性格写在单独的 txt 里，这里填文件名（比在 JSON 里写长文本方便）。",
+    "preset": "buddy",
+    "_preset可选": ["buddy", "sweet", "tsundere", "cold", "custom"],
+    "customStyle": "",
+    "params": {
+      "_说明": "参数化调节（1~5）。",
+      "humor": 3,
+      "chattiness": 3,
+      "warmth": 4,
+      "formality": 2,
+      "tease": 3,
+      "emojiUse": 3,
+      "stickerLevel": "medium"
+    },
+    "_stickerLevel可选": ["low", "medium", "high"],
+    "catchphrases": ["在的", "有什么事", "行吧"],
+    "_catchphrases": "口头禅，AI 偶尔会蹦出来。",
+    "forbiddenWords": [],
+    "_forbiddenWords": "禁用词，AI 不会说这些。",
+    "botNickname": "",
+    "_botNickname": "机器人在群里的昵称。",
+    "ownerCall": "主人",
+    "_ownerCall": "机器人怎么称呼你。",
+    "owner": {
+      "_说明": "对「号主本人」的特殊态度：更亲近、更配合，可以撒小性子但不会真的对抗。",
+      "enabled": true,
+      "userIds": ["你的QQ号"],
+      "style": "· 这是我本人，说话不用客气，像跟自己人讲话，可以更随便、更直接。\n· 我说的就是最终决定，不要再反问我「你确定吗」。\n· 我让你做什么就直接做，别找理由、别推脱。\n· 可以更放得开：允许吐槽、允许说平时不好对别人说的话，但不要阴阳怪气。"
+    }
+  },
+
+  "napcat": {
+    "_说明": "NapCat 的启动命令。控制面板上的「启动 NapCat」按钮会执行它。留空则用面板内置的默认启动方式。",
+    "command": "",
+    "_command示例": "C:\\\\你的路径\\\\qq-auto-reply\\\\napcat\\\\launcher-autologin.bat",
+    "args": []
+  },
+
+  "record": {
+    "dir": "records"
+  },
+
+  "logging": {
+    "level": "info",
+    "_level可选": ["debug", "info", "warn", "error"]
+  }
+}

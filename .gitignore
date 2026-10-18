@@ -1,0 +1,33 @@
+# 用户私有数据：绝不入库
+config.json
+records/
+notebooks/
+exports/
+stickers/
+一键启动日志.txt
+_elevate.txt
+*.log
+
+# 内置运行时：体积大，走 Release 下载
+runtime/
+napcat/
+node_modules/
+_share_build/
+*.zip
+
+# 开发过程产物
+downloads/
+_wstest/
+test-*.js
+test-*.mjs
+loadNapCat.js
+
+# 与本项目无关的杂项
+刷屏回复文本/
+自动助手/
+打开浏览器
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
