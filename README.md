@@ -16,7 +16,9 @@
 
 | 文件 | 大小 | 说明 |
 |---|---|---|
-| [`QQ自动回复机器人-分享版.zip`](../../releases/latest) | 约 42 MB | **全离线包**，Node.js 运行时 + NapCat 都已内置 |
+| [全离线包（最新版）](../../releases/latest) | 约 42 MB | Node.js 运行时 + NapCat 都已内置 |
+
+> 下载下来的文件名是 `QQAutoReplyBot-offline-v1.x.x.zip`（GitHub 不允许中文资源名，内容一样）。
 
 去 **[Releases](../../releases/latest)** 页面下载最新版。
 
